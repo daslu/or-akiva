@@ -11,12 +11,6 @@
 (def features
   (:features raw))
 
-;; Source keys — three of the four Hebrew column names have data-side typos /
-;; encoding corruption, so we use the raw key as it appears in the geojson:
-;;   :ID          — id
-;;   :שם נכ� — שם נכס (the last byte didn't decode as UTF-8)
-;;   :סוג         — סוג
-;;   :ייעוד       — יעוד (extra yod in the source)
 (def columns
   [{:label "id"     :k :ID}
    {:label "שם נכס" :k (keyword "שם נכ�")}
