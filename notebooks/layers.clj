@@ -4,8 +4,6 @@
   (:require [clojure.data.json :as json]
             [scicloj.kindly.v4.kind :as kind]))
 
-;; --- Configurable colours ------------------------------------------------
-;; Edit these to taste. Keys correspond to :key in `layers-config` below.
 (def colors
   {:karka-and-helka-70      "#888888"
    :karka-and-miscellanious "#ff7f00"
@@ -16,13 +14,6 @@
 
 
 
-;; --- Layer configuration -------------------------------------------------
-;; Order = stacking order: first is bottom, last is top. The unified
-;; `yeud-karka` layer is last so it sits on top of all others.
-;;
-;; `:fields` is a vector of `[label property-key]` pairs — only these
-;; property values are passed to the browser. Everything else (URLs,
-;; auxiliary labelling fields, etc.) is dropped server-side.
 (def karka-fields
   [["id"     :ID]
    ["שם נכס" (keyword "שם נכ�")]
@@ -51,7 +42,6 @@
     :files ["karka_shatsap.geojson"]
     :fields karka-fields}])
 
-;; --- Data loading + dedupe -----------------------------------------------
 (defn load-features [path]
   (-> (slurp path)
       (json/read-str :key-fn keyword)
@@ -135,13 +125,11 @@
 (def layers-data
   (mapv build-layer layers-config))
 
-;; Summary
-(kind/table
- {:column-names ["layer" "geometry" "features" "unique geoms" "colour"]
-  :row-vectors (mapv (juxt :name :geometry-type :n-features :n-groups :color)
-                     layers-data)})
+#_(kind/table
+   {:column-names ["layer" "geometry" "features" "unique geoms" "colour"]
+    :row-vectors (mapv (juxt :name :geometry-type :n-features :n-groups :color)
+                       layers-data)})
 
-;; --- Map ----------------------------------------------------------------
 (kind/reagent
  ['(fn [data]
      [:div {:style {:height "700px"}
