@@ -6,13 +6,10 @@
 
 (def colors
   {:karka-and-helka-70      "#888888"
-   :karka-and-miscellanious "#ff7f00"
+   :karka-and-miscellanious "#4a7ba6"
    :karka-and-nechasim      "#dda66e"
    :karka-and-shatsap       "#d62728"
    :yeud-karka              "#dda66e"})
-
-
-
 
 (def karka-fields
   [["id"     :ID]
@@ -47,11 +44,6 @@
       (json/read-str :key-fn keyword)
       :features))
 
-
-
-
-
-
 (defn ->tooltip-html [layer-key fields features]
   (str "<div style='max-width:600px;max-height:400px;overflow:auto'>"
        "<b>" (name layer-key) "</b>"
@@ -71,12 +63,8 @@
                      "</tr>")))
        "</table></div>"))
 
-
-
-
 (def Ystr-to-keep
-  #{
-    ;; "שטח ציבורי פתוח"
+  #{    ;; "שטח ציבורי פתוח"
     "בניני ציבור"
     "מוסד ציבורי"
     "מרכז אזרחי"
@@ -95,8 +83,6 @@
     "ספורט ונופש"
     ;; "פארק / גן ציבורי"
     })
-
-
 (defn build-layer [{:keys [key files fields]}]
   (let [raw-features (mapcat load-features files)
         features (if (= key :yeud-karka)
@@ -172,8 +158,6 @@
                        (.fitBounds m (.getBounds all)))))}])
   layers-data]
  {:html/deps [:leaflet]})
-
-
 
 #_(->> layers-config
        (filter #(-> % :key (= :yeud-karka)))
