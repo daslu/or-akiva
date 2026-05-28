@@ -7,7 +7,7 @@
 (def colors
   {:karka-and-helka-70      "#888888"
    :karka-and-miscellanious "#ff7f00"
-   :karka-and-nechasim      "#1f77b4"
+   :karka-and-nechasim      "#dda66e"
    :karka-and-shatsap       "#d62728"
    :yeud-karka              "#dda66e"})
 
