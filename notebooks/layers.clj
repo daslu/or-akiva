@@ -11,11 +11,11 @@
    :yeud-karka              "#dda66e"
    :mivney-dat              "#ffa000"
    :herum                   "#ff0033"
-   :sport                   "#2ca02c"
-   :chinuch                 "#9467bd"
-   :briut                   "#17becf"
+   :sport                   "#55f724"
+   :chinuch                 "#7d7ac5"
+   :briut                   "#c300ce"
    :kehila-tarbut           "#8c564b"
-   :revaha                  "#e377c2"
+   :revaha                  "#eb8289"
    :miklatim                "#455a64"})
 
 #_"Value sets used by layer filters"
@@ -143,6 +143,7 @@
     :sources [{:file "Buildings.geojson"
                :filter [{:field :סוג
                          :values #{"אולמות ספורט"}}]}]
+    :style {:color "#d40000" :weight 1.5}
     :fields building-fields}
    {:key :chinuch
     :name "חינוך"
