@@ -9,7 +9,49 @@
    :karka-and-miscellanious "#4a7ba6"
    :karka-and-nechasim      "#dda66e"
    :karka-and-shatsap       "#d62728"
-   :yeud-karka              "#dda66e"})
+   :yeud-karka              "#dda66e"
+   :mivney-dat              "#9467bd"
+   :herum                   "#ff7f0e"})
+
+#_"Value sets used by layer filters"
+
+(def Ystr-to-keep
+  #{#_"שטח ציבורי פתוח"
+    "בניני ציבור"
+    "מוסד ציבורי"
+    "מרכז אזרחי"
+    "מבנים ומוסדות ציבור"
+    #_"שצ\"פ אינטנסיבי"
+    "שטח ספורט"
+    "שטח למוסדות חינוך"
+    #_"שטח ציבורי פתוח מיוחד"
+    #_"שצ\"פ אקסטנסיבי ב'"
+    "מוסד"
+    "בית עלמין"})
+
+(def MAVAT_NAME-to-keep
+  #{"מבנים ומוסדות ציבור"
+    #_"שטח ציבורי פתוח"
+    "ספורט ונופש"
+    #_"פארק / גן ציבורי"})
+
+(def religious-types
+  #{"בית כנסת"
+    "מבנה דת"
+    "מקווה"
+    "משרדי מועצה דתית"})
+
+(def herum-types-buildings
+  #{"חירום"
+    "מחסן חירום"})
+
+(def herum-types-helka70
+  #{"שירותי חירום"})
+
+#_"Tooltip field definitions.
+   A field is [label key], where key is either a property keyword or a vector
+   of candidate keywords (first non-nil wins — useful for mojibake key drift
+   across source files)."
 
 (def karka-fields
   [["id"     :ID]
@@ -17,36 +59,94 @@
    ["סוג"    :סוג]
    ["יעוד"   :ייעוד]])
 
+(def building-fields
+  [["סוג"    :סוג]
+   ["שם נכס" [(keyword "שם נכס") (keyword "שם נכ�")]]
+   ["יעוד"   :ייעוד]])
+
+#_"Data-oriented layer configuration.
+
+   Each layer is a map:
+     :key      colour/identity key (see `colors`)
+     :name     optional Hebrew display name (defaults to the key name)
+     :sources  vector of source maps, each:
+                 :file    geojson filename
+                 :filter  optional vector of {:field <kw> :values <set>}
+                          criteria, OR-combined (a feature is kept when ANY
+                          criterion matches). Absent => keep all features.
+     :fields   tooltip field definitions"
+
 (def layers-config
   [{:key :yeud-karka
-    :files ["yeud_karka1.geojson"
-            "yeud_karka2.geojson"
-            "yeud_karka3.geojson"
-            "yeud_karka4.geojson"]
+    :sources (mapv (fn [file]
+                     {:file file
+                      :filter [{:field :Ystr      :values Ystr-to-keep}
+                               {:field :MAVAT_NAME :values MAVAT_NAME-to-keep}]})
+                   ["yeud_karka1.geojson"
+                    "yeud_karka2.geojson"
+                    "yeud_karka3.geojson"
+                    "yeud_karka4.geojson"])
     :fields [["גוש"  :gush_txt]
              ["חלקה" :helka_txt]
              ["יעוד" :Ystr]]}
    {:key :karka-and-helka-70
-    :files ["karka_and_70.geojson"]
+    :sources [{:file "karka_and_70.geojson"}]
     :fields karka-fields}
    {:key :karka-and-miscellanious
-    :files ["karka_and_misc.geojson"]
+    :sources [{:file "karka_and_misc.geojson"}]
     :fields karka-fields}
    {:key :karka-and-nechasim
-    :files ["karka_and_nechasim.geojson"]
+    :sources [{:file "karka_and_nechasim.geojson"}]
     :fields karka-fields}
    {:key :karka-and-shatsap
-    :files ["karka_shatsap.geojson"]
-    :fields karka-fields}])
+    :sources [{:file "karka_shatsap.geojson"}]
+    :fields karka-fields}
+   {:key :mivney-dat
+    :name "מבני דת"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג :values religious-types}]}]
+    :fields building-fields}
+   {:key :herum
+    :name "חירום"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג :values herum-types-buildings}]}
+              {:file "helka_70.geojson"
+               :filter [{:field :סוג :values herum-types-helka70}]}]
+    :fields building-fields}])
 
 (defn load-features [path]
   (-> (slurp path)
       (json/read-str :key-fn keyword)
       :features))
 
-(defn ->tooltip-html [layer-key fields features]
+(defn feature-passes?
+  "True when `criteria` is nil/empty (keep all) or ANY criterion matches the
+  feature's properties."
+  [criteria feature]
+  (or (empty? criteria)
+      (boolean
+       (some (fn [{:keys [field values]}]
+               (-> feature :properties field values))
+             criteria))))
+
+(defn load-source
+  "Load and filter features from a single source map."
+  [{:keys [file] :as source}]
+  (let [criteria (:filter source)]
+    (->> (load-features file)
+         (filterv #(feature-passes? criteria %)))))
+
+(defn field-value
+  "Look up a tooltip field value. `k` is a keyword or a vector of candidate
+  keywords (first non-nil wins)."
+  [props k]
+  (if (sequential? k)
+    (some (fn [kk] (let [v (get props kk)] (when (some? v) v))) k)
+    (get props k)))
+
+(defn ->tooltip-html [title fields features]
   (str "<div style='max-width:600px;max-height:400px;overflow:auto'>"
-       "<b>" (name layer-key) "</b>"
+       "<b>" title "</b>"
        "<table style='border-collapse:collapse;font-size:11px;margin-top:4px'>"
        (apply str
               (for [[label k] fields]
@@ -57,51 +157,22 @@
                      (apply str
                             (for [f features]
                               (str "<td style='border:1px solid #ccc;padding:2px 6px'>"
-                                   (let [v (get-in f [:properties k])]
+                                   (let [v (field-value (:properties f) k)]
                                      (if (nil? v) "" v))
                                    "</td>")))
                      "</tr>")))
        "</table></div>"))
 
-(def Ystr-to-keep
-  #{    ;; "שטח ציבורי פתוח"
-    "בניני ציבור"
-    "מוסד ציבורי"
-    "מרכז אזרחי"
-    "מבנים ומוסדות ציבור"
-    ;; "שצ\"פ אינטנסיבי"
-    "שטח ספורט"
-    "שטח למוסדות חינוך"
-    ;; "שטח ציבורי פתוח מיוחד"
-    ;; "שצ\"פ אקסטנסיבי ב'"
-    "מוסד"
-    "בית עלמין"})
-
-(def MAVAT_NAME-to-keep
-  #{"מבנים ומוסדות ציבור"
-    ;; "שטח ציבורי פתוח"
-    "ספורט ונופש"
-    ;; "פארק / גן ציבורי"
-    })
-(defn build-layer [{:keys [key files fields]}]
-  (let [raw-features (mapcat load-features files)
-        features (if (= key :yeud-karka)
-                   (->> raw-features
-                        (filter (fn [{:keys [properties]}]
-                                  (or (-> properties
-                                          :Ystr
-                                          (Ystr-to-keep))
-                                      (-> properties
-                                          :MAVAT_NAME
-                                          (MAVAT_NAME-to-keep))))))
-                   raw-features)
+(defn build-layer [{:keys [key sources fields] :as layer}]
+  (let [layer-name (or (:name layer) (name key))
+        features (mapcat load-source sources)
         groups (->> features
                     (group-by :geometry)
                     (mapv (fn [[geom fs]]
                             {:geometry geom
-                             :tooltip (->tooltip-html key fields fs)})))]
+                             :tooltip (->tooltip-html layer-name fields fs)})))]
     {:key key
-     :name (name key)
+     :name layer-name
      :color (get colors key "#666666")
      :geometry-type (-> features first :geometry :type)
      :n-features (count features)
@@ -160,19 +231,13 @@
  {:html/deps [:leaflet]})
 
 #_(->> layers-config
-       (filter #(-> % :key (= :yeud-karka)))
+       (filter #(-> % :key (= :mivney-dat)))
        first
-       :files
-       (map (fn [f]
-              (->> f
-                   load-features
-                   (map :properties)
-                   (map (fn [p]
-                          (:MAVAT_NAME p)))
-                   frequencies
-                   (sort-by first)))))
-
-
-
-
-
+       :sources
+       (map (fn [{:keys [file]}]
+              [file
+               (->> file
+                    load-features
+                    (map (comp :סוג :properties))
+                    frequencies
+                    (sort-by first))])))
