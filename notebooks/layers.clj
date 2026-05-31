@@ -5,7 +5,7 @@
             [scicloj.kindly.v4.kind :as kind]))
 
 (def colors
-  {:karka-and-helka-70      "#888888"
+  {;; :karka-and-helka-70      "#888888"
    :karka-and-miscellanious "#4a7ba6"
    :karka-and-nechasim      "#dda66e"
    :yeud-karka              "#dda66e"
@@ -107,10 +107,10 @@
                  :color "#7cb342"}
                 {:match [{:field :Ystr :values #{"מרכז אזרחי"}}]
                  :pattern "ezrahi"}]}
-   {:key :karka-and-helka-70
-    :name "קרקע וחלקה 70"
-    :sources [{:file "karka_and_70.geojson"}]
-    :fields karka-fields}
+   #_{:key :karka-and-helka-70
+      :name "קרקע וחלקה 70"
+      :sources [{:file "karka_and_70.geojson"}]
+      :fields karka-fields}
    {:key :karka-and-miscellanious
     :name "קרקע ושונות"
     :sources [{:file "karka_and_misc.geojson"}]
