@@ -113,7 +113,7 @@
    {:key :border
     :name "גבול העיר"
     :sources [{:file "border.geojson"}]
-    :style {:fill false :weight 2}}])
+    :style {:fill false :weight 2 :color "#1e90ff"}}])
 
 (defn load-features [path]
   (-> (slurp path)
@@ -278,9 +278,10 @@
                            ;; label = colour swatch + name, so the layer
                            ;; control doubles as a legend
                            (let [fill? (not (false? (:fill style-override)))
+                                 stroke (or (:color style-override) "#000000")
                                  swatch (str "<span style='display:inline-block;"
                                              "width:12px;height:12px;vertical-align:middle;"
-                                             "margin-inline-end:6px;border:1px solid #000;"
+                                             "margin-inline-end:6px;border:1px solid " stroke ";"
                                              "background:" (if fill? color "transparent")
                                              "'></span>")]
                              (aset overlays (str swatch name) layer-group))))
