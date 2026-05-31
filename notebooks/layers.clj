@@ -15,7 +15,8 @@
    :sport                   "#2ca02c"
    :chinuch                 "#9467bd"
    :briut                   "#17becf"
-   :kehila-tarbut           "#8c564b"})
+   :kehila-tarbut           "#8c564b"
+   :revaha                  "#e377c2"})
 
 #_"Value sets used by layer filters"
 
@@ -149,6 +150,16 @@
                          :values #{"קהילה"
                                    "תרבות"
                                    "תרבות וקהילה"}}]}]
+    :fields building-fields}
+   {:key :revaha
+    :name "רווחה"
+    :sources (mapv (fn [file]
+                     {:file file
+                      :filter [{:field :סוג
+                                :values #{"מועדונית" "רווחה"}}]})
+                   ["Buildings.geojson"
+                    "helka_70.geojson"
+                    "Shonot.geojson"])
     :fields building-fields}
    {:key :border
     :name "גבול העיר"
