@@ -75,12 +75,14 @@
      :style    optional Leaflet path-style overrides merged over the
                defaults, e.g. {:fill false :weight 2} for an outline-only
                border
-     :overrides optional vector of {:match <criteria> :color <hex>} that
-                recolour a subset of the layer's own features. <criteria> has
-                the same OR-vector shape as a source :filter. For each rendered
-                geometry the first matching override wins; non-matching
-                features keep the layer colour. Lets one layer carry a visually
-                distinct sub-category (e.g. a single בית עלמין parcel)."
+     :overrides optional vector of {:match <criteria> :color <hex> :pattern <id>}
+                that restyle a subset of the layer's own features. <criteria>
+                has the same OR-vector shape as a source :filter. For each
+                rendered geometry the first matching override wins; non-matching
+                features keep the layer colour. :color sets a solid fill;
+                :pattern (id into `patterns`) fills with an SVG hatch instead
+                (with :color as the fallback). Lets one layer carry a visually
+                distinct sub-category (e.g. the בית עלמין parcel)."
 
 (def layers-config
   [{:key :yeud-karka
@@ -97,7 +99,8 @@
              ["חלקה" :helka_txt]
              ["יעוד" :Ystr]]
     :overrides [{:match [{:field :Ystr :values #{"בית עלמין"}}]
-                 :color "#37474f"}]}
+                 :pattern "cemetery-hatch"
+                 :color "#7cb342"}]}
    {:key :karka-and-helka-70
     :sources [{:file "karka_and_70.geojson"}]
     :fields karka-fields}
@@ -229,15 +232,12 @@
                      "</tr>")))
        "</table></div>"))
 
-(defn group-color
-  "Colour for a geometry group: the first override whose :match matches any of
-  the group's features, else the layer's default colour."
-  [layer-color overrides features]
-  (or (some (fn [{:keys [match color]}]
-              (when (some #(feature-passes? match %) features)
-                color))
-            overrides)
-      layer-color))
+(defn matching-override
+  "First override whose :match matches any of the group's features, or nil."
+  [overrides features]
+  (some (fn [o]
+          (when (some #(feature-passes? (:match o) %) features) o))
+        overrides))
 
 (defn build-layer [{:keys [key sources fields overrides] :as layer}]
   (let [layer-name (or (:name layer) (name key))
@@ -246,10 +246,12 @@
         groups (->> features
                     (group-by :geometry)
                     (mapv (fn [[geom fs]]
-                            {:geometry geom
-                             :color (group-color layer-color overrides fs)
-                             :tooltip (when (seq fields)
-                                        (->tooltip-html layer-name fields fs))})))]
+                            (let [ov (matching-override overrides fs)]
+                              {:geometry geom
+                               :color (or (:color ov) layer-color)
+                               :pattern (:pattern ov)
+                               :tooltip (when (seq fields)
+                                          (->tooltip-html layer-name fields fs))}))))]
     {:key key
      :name layer-name
      :color layer-color
@@ -309,25 +311,56 @@
 (def layers-data
   (mapv build-layer layers-config))
 
+#_"SVG <pattern> markup by id, injected into the map renderer's <defs> and
+   referenced from a layer override via :pattern \"<id>\". The cemetery hatch
+   is the green/yellow diagonal crosshatch used on Israeli planning maps for
+   בית עלמין."
+(def patterns
+  {"cemetery-hatch"
+   ;; opaque yellow field with a green diagonal crosshatch (both diagonals)
+   (str "<pattern id='cemetery-hatch' patternUnits='userSpaceOnUse'"
+        " width='12' height='12'>"
+        "<rect width='12' height='12' fill='#e4e62a'/>"
+        "<path d='M0,12 L12,0 M0,0 L12,12' stroke='#4caf50' stroke-width='1'/>"
+        "</pattern>")})
+
 #_(kind/table
    {:column-names ["layer" "geometry" "features" "unique geoms" "colour"]
     :row-vectors (mapv (juxt :name :geometry-type :n-features :n-groups :color)
                        layers-data)})
 
 (kind/reagent
- ['(fn [data]
+ ['(fn [data patterns]
      [:div {:style {:height "700px"}
             :ref (fn [el]
                    (when el
                      (let [m (-> js/L (.map el))
                            all (.featureGroup js/L)
-                           overlays (js-obj)]
+                           overlays (js-obj)
+                           renderer (.svg js/L)]
+                       ;; give the map a view up front so layer/renderer adds
+                       ;; happen synchronously (their DOM containers exist
+                       ;; immediately); fitBounds at the end refines it
+                       (.setView m (clj->js [32.51 34.92]) 13)
+                       (.addTo renderer m)
+                       ;; inject the SVG <pattern> defs into the renderer's <svg>
+                       (let [markup (apply str (vals (js->clj patterns)))]
+                         (when (seq markup)
+                           (let [doc (.parseFromString
+                                      (js/DOMParser.)
+                                      (str "<svg xmlns='http://www.w3.org/2000/svg'>"
+                                           "<defs>" markup "</defs></svg>")
+                                      "image/svg+xml")
+                                 defs (.. doc -documentElement -firstChild)]
+                             (.appendChild (.-_container renderer)
+                                           (.importNode js/document defs true)))))
                        (-> js/L .-tileLayer
                            (.provider "CartoDB.Positron")
                            (.addTo m))
                        (doseq [{:keys [name color groups] style-override :style} data]
-                         (let [layer-group (.featureGroup js/L)]
-                           (doseq [{:keys [geometry tooltip] gcolor :color} groups]
+                         (let [layer-group (.featureGroup js/L)
+                               patterned (atom [])]
+                           (doseq [{:keys [geometry tooltip] gcolor :color pat :pattern} groups]
                              (let [c (or gcolor color)
                                    style (clj->js (merge {:color "#000000"
                                                           :fillColor c
@@ -342,15 +375,24 @@
                                                          :opacity 1
                                                          :fillOpacity 1})
                                    options (clj->js
-                                            {:style style
+                                            {:renderer renderer
+                                             :style style
                                              :pointToLayer
                                              (fn [_ latlng]
                                                (.circleMarker js/L latlng point-style))})
                                    f (.geoJSON js/L (clj->js geometry) options)]
                                (when tooltip (.bindTooltip f tooltip))
                                (.addLayer layer-group f)
-                               (.addLayer all f)))
+                               (.addLayer all f)
+                               (when pat (swap! patterned conj [f pat]))))
                            (.addTo layer-group m)
+                           ;; paths exist now; point patterned ones at their hatch
+                           (doseq [[f pat] @patterned]
+                             (.eachLayer f
+                                         (fn [lyr]
+                                           (when (.-_path lyr)
+                                             (.setAttribute (.-_path lyr) "fill"
+                                                            (str "url(#" pat ")"))))))
                            ;; label = colour swatch + name, so the layer
                            ;; control doubles as a legend
                            (let [fill? (not (false? (:fill style-override)))
@@ -365,7 +407,8 @@
                            (.layers nil overlays (clj->js {:collapsed false}))
                            (.addTo m))
                        (.fitBounds m (.getBounds all)))))}])
-  layers-data]
+  layers-data
+  patterns]
  {:html/deps [:leaflet]})
 
 #_(->> layers-config
