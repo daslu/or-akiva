@@ -89,6 +89,7 @@
 
 (def layers-config
   [{:key :yeud-karka
+    :name "ייעודי קרקע"
     :sources (mapv (fn [file]
                      {:file file
                       :filter [{:field :Ystr      :values Ystr-to-keep}
@@ -107,12 +108,15 @@
                 {:match [{:field :Ystr :values #{"מרכז אזרחי"}}]
                  :pattern "ezrahi"}]}
    {:key :karka-and-helka-70
+    :name "קרקע וחלקה 70"
     :sources [{:file "karka_and_70.geojson"}]
     :fields karka-fields}
    {:key :karka-and-miscellanious
+    :name "קרקע ושונות"
     :sources [{:file "karka_and_misc.geojson"}]
     :fields karka-fields}
    {:key :karka-and-nechasim
+    :name "קרקע ונכסים"
     :sources [{:file "karka_and_nechasim.geojson"}]
     :fields karka-fields}
    {:key :mivney-dat
