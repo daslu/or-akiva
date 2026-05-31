@@ -8,7 +8,6 @@
   {:karka-and-helka-70      "#888888"
    :karka-and-miscellanious "#4a7ba6"
    :karka-and-nechasim      "#dda66e"
-   :karka-and-shatsap       "#d62728"
    :yeud-karka              "#dda66e"
    :mivney-dat              "#ffa000"
    :herum                   "#ff0033"
@@ -16,7 +15,8 @@
    :chinuch                 "#9467bd"
    :briut                   "#17becf"
    :kehila-tarbut           "#8c564b"
-   :revaha                  "#e377c2"})
+   :revaha                  "#e377c2"
+   :miklatim                "#455a64"})
 
 #_"Value sets used by layer filters"
 
@@ -113,9 +113,6 @@
    {:key :karka-and-nechasim
     :sources [{:file "karka_and_nechasim.geojson"}]
     :fields karka-fields}
-   {:key :karka-and-shatsap
-    :sources [{:file "karka_shatsap.geojson"}]
-    :fields karka-fields}
    {:key :mivney-dat
     :name "מבני דת"
     :sources [{:file "Buildings.geojson"
@@ -174,6 +171,10 @@
                    ["Buildings.geojson"
                     "helka_70.geojson"
                     "Shonot.geojson"])
+    :fields building-fields}
+   {:key :miklatim
+    :name "מקלטים"
+    :sources [{:file "Miklatim.geojson"}]
     :fields building-fields}
    {:key :border
     :name "גבול העיר"
