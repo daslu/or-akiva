@@ -275,7 +275,15 @@
                                (.addLayer layer-group f)
                                (.addLayer all f)))
                            (.addTo layer-group m)
-                           (aset overlays name layer-group)))
+                           ;; label = colour swatch + name, so the layer
+                           ;; control doubles as a legend
+                           (let [fill? (not (false? (:fill style-override)))
+                                 swatch (str "<span style='display:inline-block;"
+                                             "width:12px;height:12px;vertical-align:middle;"
+                                             "margin-inline-end:6px;border:1px solid #000;"
+                                             "background:" (if fill? color "transparent")
+                                             "'></span>")]
+                             (aset overlays (str swatch name) layer-group))))
                        (-> js/L .-control
                            (.layers nil overlays (clj->js {:collapsed false}))
                            (.addTo m))
