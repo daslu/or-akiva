@@ -173,6 +173,49 @@
      :n-groups (count groups)
      :groups groups}))
 
+#_"Sensibility check on layer filters: every value we filter on must actually
+   appear, under the given field, in at least one of that layer's source
+   files (catches typos), and no filter may have an empty value set (catches
+   a filter that would keep nothing). The check is per-layer-union, since a
+   layer may apply one value set across several files where each value only
+   occurs in some of them (e.g. :yeud-karka)."
+
+(defn check-filter-values!
+  "Validate the filter values in `config` against the actual data.
+  Throws ex-info listing any value absent from its layer's files, or any
+  empty value set. Returns the (truthy) report seq when everything is fine."
+  [config]
+  (let [load-once (memoize load-features)
+        present-set (fn [files field]
+                      (->> files
+                           (mapcat load-once)
+                           (keep #(get-in % [:properties field]))
+                           set))
+        report (vec
+                (for [{:keys [key sources]} config
+                      :let [files (mapv :file sources)
+                            criteria (mapcat :filter sources)
+                            present (into {} (map (fn [field]
+                                                    [field (present-set files field)])
+                                                  (distinct (map :field criteria))))]
+                      {:keys [field values]} criteria
+                      v values]
+                  {:layer key :field field :value v
+                   :present? (contains? (present field) v)}))
+        missing (remove :present? report)
+        empty-filters (for [{:keys [key sources]} config
+                            {:keys [field values]} (mapcat :filter sources)
+                            :when (empty? values)]
+                        {:layer key :field field})]
+    (when (or (seq missing) (seq empty-filters))
+      (throw (ex-info "Layer filter sensibility check failed: filter values missing from data (typo?) or empty value set."
+                      {:missing missing
+                       :empty-filters (vec empty-filters)})))
+    report))
+
+(def filter-value-report
+  (check-filter-values! layers-config))
+
 (def layers-data
   (mapv build-layer layers-config))
 
