@@ -10,8 +10,8 @@
    :karka-and-nechasim      "#dda66e"
    :karka-and-shatsap       "#d62728"
    :yeud-karka              "#dda66e"
-   :mivney-dat              "#9467bd"
-   :herum                   "#ff7f0e"})
+   :mivney-dat              "#ffa000"
+   :herum                   "#ff0033"})
 
 #_"Value sets used by layer filters"
 
