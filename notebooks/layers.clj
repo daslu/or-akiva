@@ -88,11 +88,7 @@
                   toggles it on). Default off."
 
 (def layers-config
-  [{:key :karka-and-nechasim
-    :name "קרקע ונכסים"
-    :sources [{:file "karka_and_nechasim.geojson"}]
-    :fields karka-fields}
-   {:key :yeud-karka
+  [{:key :yeud-karka
     :name "ייעודי קרקע"
     :sources (mapv (fn [file]
                      {:file file
@@ -111,6 +107,10 @@
                  :color "#7cb342"}
                 {:match [{:field :Ystr :values #{"מרכז אזרחי"}}]
                  :pattern "ezrahi"}]}
+   {:key :karka-and-nechasim
+    :name "קרקע ונכסים"
+    :sources [{:file "karka_and_nechasim.geojson"}]
+    :fields karka-fields}
    #_{:key :karka-and-helka-70
       :name "קרקע וחלקה 70"
       :sources [{:file "karka_and_70.geojson"}]
@@ -322,7 +322,8 @@
   (check-filter-values! layers-config))
 
 (def layers-data
-  (mapv build-layer layers-config))
+  ;; reversed: layers render/list/stack in the reverse of their config order
+  (mapv build-layer (reverse layers-config)))
 
 #_"SVG <pattern> markup by id, injected into the map renderer's <defs> and
    referenced from a layer override via :pattern \"<id>\". The cemetery hatch
