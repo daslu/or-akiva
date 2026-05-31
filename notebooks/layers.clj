@@ -7,7 +7,7 @@
 (def colors
   {;; :karka-and-helka-70      "#888888"
    :karka-and-miscellanious "#4a7ba6"
-   :karka-and-nechasim      "#dda66e"
+   :karka-and-nechasim      "#9b8979"
    :yeud-karka              "#dda66e"
    :mivney-dat              "#ffa000"
    :herum                   "#ff0033"
@@ -356,7 +356,7 @@
  ['(fn [data patterns]
      [:div {:style {:height "700px"}
             :ref (fn [el]
-                   (when eln
+                   (when el
                      (let [m (-> js/L (.map el))
                            all (.featureGroup js/L)
                            overlays (js-obj)
