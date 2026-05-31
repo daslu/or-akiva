@@ -11,7 +11,11 @@
    :karka-and-shatsap       "#d62728"
    :yeud-karka              "#dda66e"
    :mivney-dat              "#ffa000"
-   :herum                   "#ff0033"})
+   :herum                   "#ff0033"
+   :sport                   "#2ca02c"
+   :chinuch                 "#9467bd"
+   :briut                   "#17becf"
+   :kehila-tarbut           "#8c564b"})
 
 #_"Value sets used by layer filters"
 
@@ -115,6 +119,36 @@
               {:file "helka_70.geojson"
                :filter [{:field :סוג
                          :values #{"שירותי חירום"}}]}]
+    :fields building-fields}
+   {:key :sport
+    :name "ספורט"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג
+                         :values #{"אולמות ספורט"}}]}]
+    :fields building-fields}
+   {:key :chinuch
+    :name "חינוך"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג
+                         :values #{"בית ספר"
+                                   "גני ילדים"
+                                   "מבנה חינוך כללי"
+                                   "מעונות יום"}}]}]
+    :fields building-fields}
+   {:key :briut
+    :name "בריאות"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג
+                         :values #{"בריאות"
+                                   "טיפת חלב"}}]}]
+    :fields building-fields}
+   {:key :kehila-tarbut
+    :name "קהילה ותרבות"
+    :sources [{:file "Buildings.geojson"
+               :filter [{:field :סוג
+                         :values #{"קהילה"
+                                   "תרבות"
+                                   "תרבות וקהילה"}}]}]
     :fields building-fields}
    {:key :border
     :name "גבול העיר"
