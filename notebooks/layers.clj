@@ -431,6 +431,11 @@
                        (-> js/L .-control
                            (.layers nil overlays (clj->js {:collapsed false}))
                            (.addTo m))
+                       ;; neutral (dark grey) checkbox tick instead of browser blue
+                       (let [st (.createElement js/document "style")]
+                         (set! (.-textContent st)
+                               ".leaflet-control-layers-selector{accent-color:#555}")
+                         (.appendChild (.-head js/document) st))
                        (.fitBounds m (.getBounds all)))))}])
   layers-data
   patterns]
