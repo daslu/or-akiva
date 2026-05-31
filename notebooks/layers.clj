@@ -88,7 +88,11 @@
                   toggles it on). Default off."
 
 (def layers-config
-  [{:key :yeud-karka
+  [{:key :karka-and-nechasim
+    :name "קרקע ונכסים"
+    :sources [{:file "karka_and_nechasim.geojson"}]
+    :fields karka-fields}
+   {:key :yeud-karka
     :name "ייעודי קרקע"
     :sources (mapv (fn [file]
                      {:file file
@@ -107,10 +111,6 @@
                  :color "#7cb342"}
                 {:match [{:field :Ystr :values #{"מרכז אזרחי"}}]
                  :pattern "ezrahi"}]}
-   {:key :karka-and-nechasim
-    :name "קרקע ונכסים"
-    :sources [{:file "karka_and_nechasim.geojson"}]
-    :fields karka-fields}
    #_{:key :karka-and-helka-70
       :name "קרקע וחלקה 70"
       :sources [{:file "karka_and_70.geojson"}]
