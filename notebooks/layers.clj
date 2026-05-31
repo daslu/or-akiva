@@ -103,7 +103,9 @@
              ["יעוד" :Ystr]]
     :overrides [{:match [{:field :Ystr :values #{"בית עלמין"}}]
                  :pattern "cemetery-hatch"
-                 :color "#7cb342"}]}
+                 :color "#7cb342"}
+                {:match [{:field :Ystr :values #{"מרכז אזרחי"}}]
+                 :pattern "ezrahi"}]}
    {:key :karka-and-helka-70
     :sources [{:file "karka_and_70.geojson"}]
     :fields karka-fields}
@@ -330,6 +332,14 @@
         " width='6' height='6'>"
         "<rect width='6' height='6' fill='#e4e62a'/>"
         "<path d='M0,6 L6,0 M0,0 L6,6' stroke='#4caf50' stroke-width='0.8'/>"
+        "</pattern>")
+   "ezrahi"
+   ;; the yeud-karka tan field with single-direction blue diagonal stripes,
+   ;; for מרכז אזרחי parcels (matches the layer background, adds blue ↗ lines)
+   (str "<pattern id='ezrahi' patternUnits='userSpaceOnUse'"
+        " width='8' height='8'>"
+        "<rect width='8' height='8' fill='#dda66e'/>"
+        "<path d='M0,8 L8,0' stroke='#1f5fd8' stroke-width='2'/>"
         "</pattern>")})
 
 #_(kind/table
