@@ -61,7 +61,10 @@
                  :filter  optional vector of {:field <kw> :values <set>}
                           criteria, OR-combined (a feature is kept when ANY
                           criterion matches). Absent => keep all features.
-     :fields   tooltip field definitions"
+     :fields   tooltip field definitions (omit => no tooltip)
+     :style    optional Leaflet path-style overrides merged over the
+               defaults, e.g. {:fill false :weight 2} for an outline-only
+               border"
 
 (def layers-config
   [{:key :yeud-karka
@@ -106,7 +109,11 @@
               {:file "helka_70.geojson"
                :filter [{:field :סוג
                          :values #{"שירותי חירום"}}]}]
-    :fields building-fields}])
+    :fields building-fields}
+   {:key :border
+    :name "גבול העיר"
+    :sources [{:file "border.geojson"}]
+    :style {:fill false :weight 2}}])
 
 (defn load-features [path]
   (-> (slurp path)
@@ -164,10 +171,12 @@
                     (group-by :geometry)
                     (mapv (fn [[geom fs]]
                             {:geometry geom
-                             :tooltip (->tooltip-html layer-name fields fs)})))]
+                             :tooltip (when (seq fields)
+                                        (->tooltip-html layer-name fields fs))})))]
     {:key key
      :name layer-name
      :color (get colors key "#666666")
+     :style (:style layer)
      :geometry-type (-> features first :geometry :type)
      :n-features (count features)
      :n-groups (count groups)
@@ -235,13 +244,14 @@
                        (-> js/L .-tileLayer
                            (.provider "CartoDB.Positron")
                            (.addTo m))
-                       (doseq [{:keys [name color groups]} data]
+                       (doseq [{:keys [name color groups] style-override :style} data]
                          (let [layer-group (.featureGroup js/L)
-                               style (clj->js {:color "#000000"
-                                               :fillColor color
-                                               :weight 0.5
-                                               :opacity 1
-                                               :fillOpacity 1})
+                               style (clj->js (merge {:color "#000000"
+                                                      :fillColor color
+                                                      :weight 0.5
+                                                      :opacity 1
+                                                      :fillOpacity 1}
+                                                     style-override))
                                point-style (clj->js {:radius 5
                                                      :color color
                                                      :fillColor color
@@ -255,7 +265,7 @@
                                            (.circleMarker js/L latlng point-style))})]
                            (doseq [{:keys [geometry tooltip]} groups]
                              (let [f (.geoJSON js/L (clj->js geometry) options)]
-                               (.bindTooltip f tooltip)
+                               (when tooltip (.bindTooltip f tooltip))
                                (.addLayer layer-group f)
                                (.addLayer all f)))
                            (.addTo layer-group m)
