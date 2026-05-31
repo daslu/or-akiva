@@ -317,11 +317,13 @@
    בית עלמין."
 (def patterns
   {"cemetery-hatch"
-   ;; opaque yellow field with a green diagonal crosshatch (both diagonals)
+   ;; opaque yellow field with a green diagonal crosshatch (both diagonals).
+   ;; 6px tile keeps yellow and green both legible on the small parcel at
+   ;; city zoom (finer muddies into solid, coarser shows too few lines).
    (str "<pattern id='cemetery-hatch' patternUnits='userSpaceOnUse'"
-        " width='12' height='12'>"
-        "<rect width='12' height='12' fill='#e4e62a'/>"
-        "<path d='M0,12 L12,0 M0,0 L12,12' stroke='#4caf50' stroke-width='1'/>"
+        " width='6' height='6'>"
+        "<rect width='6' height='6' fill='#e4e62a'/>"
+        "<path d='M0,6 L6,0 M0,0 L6,6' stroke='#4caf50' stroke-width='0.8'/>"
         "</pattern>")})
 
 #_(kind/table
