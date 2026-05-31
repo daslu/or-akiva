@@ -88,7 +88,11 @@
                   toggles it on). Default off."
 
 (def layers-config
-  [{:key :yeud-karka
+  [{:key :karka-and-nechasim
+    :name "קרקע ונכסים"
+    :sources [{:file "karka_and_nechasim.geojson"}]
+    :fields karka-fields}
+   {:key :yeud-karka
     :name "ייעודי קרקע"
     :sources (mapv (fn [file]
                      {:file file
@@ -114,10 +118,6 @@
    {:key :karka-and-miscellanious
     :name "קרקע ושונות"
     :sources [{:file "karka_and_misc.geojson"}]
-    :fields karka-fields}
-   {:key :karka-and-nechasim
-    :name "קרקע ונכסים"
-    :sources [{:file "karka_and_nechasim.geojson"}]
     :fields karka-fields}
    {:key :mivney-dat
     :name "מבני דת"
@@ -360,7 +360,10 @@
                      (let [m (-> js/L (.map el))
                            all (.featureGroup js/L)
                            overlays (js-obj)
-                           renderer (.svg js/L)]
+                           renderer (.svg js/L)
+                           ;; layer-groups in config order, to re-assert
+                           ;; stacking after toggles (see overlayadd below)
+                           order (atom [])]
                        ;; give the map a view up front so layer/renderer adds
                        ;; happen synchronously (their DOM containers exist
                        ;; immediately); fitBounds at the end refines it
@@ -417,6 +420,7 @@
                                                                        (str "url(#" pat ")"))))))))
                                (.addLayer layer-group f)
                                (.addLayer all f)))
+                           (swap! order conj layer-group)
                            ;; layers start off unless they opt in (e.g. גבול העיר)
                            (when default-on (.addTo layer-group m))
                            ;; label = colour swatch + name, so the layer
@@ -437,6 +441,14 @@
                          (set! (.-textContent st)
                                ".leaflet-control-layers-selector{accent-color:#555}")
                          (.appendChild (.-head js/document) st))
+                       ;; keep stacking fixed to config order: a toggled-on layer
+                       ;; would otherwise pop to the top, so re-front the visible
+                       ;; layers in their configured order on every overlay add
+                       (.on m "overlayadd"
+                            (fn [_]
+                              (doseq [lg @order]
+                                (when (.hasLayer m lg)
+                                  (.bringToFront lg)))))
                        (.fitBounds m (.getBounds all)))))}])
   layers-data
   patterns]
