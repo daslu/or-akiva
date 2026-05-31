@@ -40,14 +40,19 @@
    of candidate keywords (first non-nil wins — useful for mojibake key drift
    across source files)."
 
+#_"Every tooltip starts with an id column. :ID is present in most files;
+   the yeud files only carry :OBJECTID, so fall back to it."
+(def id-field ["id" [:ID :OBJECTID]])
+
 (def karka-fields
-  [["id"     :ID]
+  [id-field
    ["שם נכס" (keyword "שם נכ�")]
    ["סוג"    :סוג]
    ["יעוד"   :ייעוד]])
 
 (def building-fields
-  [["סוג"    :סוג]
+  [id-field
+   ["סוג"    :סוג]
    ["שם נכס" [(keyword "שם נכס") (keyword "שם נכ�")]]
    ["יעוד"   :ייעוד]])
 
@@ -76,7 +81,8 @@
                     "yeud_karka2.geojson"
                     "yeud_karka3.geojson"
                     "yeud_karka4.geojson"])
-    :fields [["גוש"  :gush_txt]
+    :fields [id-field
+             ["גוש"  :gush_txt]
              ["חלקה" :helka_txt]
              ["יעוד" :Ystr]]}
    {:key :karka-and-helka-70
