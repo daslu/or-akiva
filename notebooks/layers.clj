@@ -14,7 +14,7 @@
    :sport                   "#55f724"
    :chinuch                 "#7d7ac5"
    :briut                   "#c300ce"
-   :kehila-tarbut           "#8c564b"
+   :kehila-tarbut           "#48af1d"
    :revaha                  "#eb8289"
    :miklatim                "#455a64"})
 
