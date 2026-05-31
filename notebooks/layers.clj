@@ -356,7 +356,7 @@
  ['(fn [data patterns]
      [:div {:style {:height "700px"}
             :ref (fn [el]
-                   (when el
+                   (when eln
                      (let [m (-> js/L (.map el))
                            all (.featureGroup js/L)
                            overlays (js-obj)
