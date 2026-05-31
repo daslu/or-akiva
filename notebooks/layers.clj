@@ -82,7 +82,10 @@
                 features keep the layer colour. :color sets a solid fill;
                 :pattern (id into `patterns`) fills with an SVG hatch instead
                 (with :color as the fallback). Lets one layer carry a visually
-                distinct sub-category (e.g. the בית עלמין parcel)."
+                distinct sub-category (e.g. the בית עלמין parcel).
+     :default-on  when truthy the layer starts visible on the map; otherwise it
+                  is registered in the layer control but starts off (the user
+                  toggles it on). Default off."
 
 (def layers-config
   [{:key :yeud-karka
@@ -175,7 +178,8 @@
    {:key :border
     :name "גבול העיר"
     :sources [{:file "border.geojson"}]
-    :style {:fill false :weight 2 :color "#1e90ff"}}])
+    :style {:fill false :weight 2 :color "#1e90ff"}
+    :default-on true}])
 
 (defn load-features [path]
   (-> (slurp path)
@@ -256,6 +260,7 @@
      :name layer-name
      :color layer-color
      :style (:style layer)
+     :default-on (boolean (:default-on layer))
      :geometry-type (-> features first :geometry :type)
      :n-features (count features)
      :n-groups (count groups)
@@ -359,9 +364,8 @@
                        (-> js/L .-tileLayer
                            (.provider "CartoDB.Positron")
                            (.addTo m))
-                       (doseq [{:keys [name color groups] style-override :style} data]
-                         (let [layer-group (.featureGroup js/L)
-                               patterned (atom [])]
+                       (doseq [{:keys [name color groups default-on] style-override :style} data]
+                         (let [layer-group (.featureGroup js/L)]
                            (doseq [{:keys [geometry tooltip] gcolor :color pat :pattern} groups]
                              (let [c (or gcolor color)
                                    style (clj->js (merge {:color "#000000"
@@ -384,17 +388,21 @@
                                                (.circleMarker js/L latlng point-style))})
                                    f (.geoJSON js/L (clj->js geometry) options)]
                                (when tooltip (.bindTooltip f tooltip))
+                               ;; (re)apply the SVG pattern fill each time the
+                               ;; layer is shown, so it survives starting hidden
+                               ;; and toggling on/off in the control
+                               (when pat
+                                 (.on f "add"
+                                      (fn [_]
+                                        (.eachLayer f
+                                                    (fn [lyr]
+                                                      (when (.-_path lyr)
+                                                        (.setAttribute (.-_path lyr) "fill"
+                                                                       (str "url(#" pat ")"))))))))
                                (.addLayer layer-group f)
-                               (.addLayer all f)
-                               (when pat (swap! patterned conj [f pat]))))
-                           (.addTo layer-group m)
-                           ;; paths exist now; point patterned ones at their hatch
-                           (doseq [[f pat] @patterned]
-                             (.eachLayer f
-                                         (fn [lyr]
-                                           (when (.-_path lyr)
-                                             (.setAttribute (.-_path lyr) "fill"
-                                                            (str "url(#" pat ")"))))))
+                               (.addLayer all f)))
+                           ;; layers start off unless they opt in (e.g. גבול העיר)
+                           (when default-on (.addTo layer-group m))
                            ;; label = colour swatch + name, so the layer
                            ;; control doubles as a legend
                            (let [fill? (not (false? (:fill style-override)))
