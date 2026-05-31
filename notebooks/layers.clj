@@ -237,9 +237,9 @@
                            (.addTo m))
                        (doseq [{:keys [name color groups]} data]
                          (let [layer-group (.featureGroup js/L)
-                               style (clj->js {:color color
+                               style (clj->js {:color "#000000"
                                                :fillColor color
-                                               :weight 1
+                                               :weight 0.5
                                                :opacity 1
                                                :fillOpacity 1})
                                point-style (clj->js {:radius 5
