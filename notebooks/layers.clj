@@ -149,14 +149,20 @@
   (str "<div style='max-width:600px;max-height:400px;overflow:auto'>"
        "<b>" title "</b>"
        "<table style='border-collapse:collapse;font-size:11px;margin-top:4px'>"
+       ;; header row: one column per property
+       "<tr>"
        (apply str
-              (for [[label k] fields]
-                (str "<tr>"
-                     "<th style='border:1px solid #ccc;padding:2px 6px;"
+              (for [[label _] fields]
+                (str "<th style='border:1px solid #ccc;padding:2px 6px;"
                      "background:#eee;text-align:start;white-space:nowrap'>"
-                     label "</th>"
+                     label "</th>")))
+       "</tr>"
+       ;; one row per case (feature)
+       (apply str
+              (for [f features]
+                (str "<tr>"
                      (apply str
-                            (for [f features]
+                            (for [[_ k] fields]
                               (str "<td style='border:1px solid #ccc;padding:2px 6px'>"
                                    (let [v (field-value (:properties f) k)]
                                      (if (nil? v) "" v))
