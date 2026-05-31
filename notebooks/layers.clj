@@ -362,9 +362,16 @@
                            all (.featureGroup js/L)
                            overlays (js-obj)
                            renderer (.svg js/L)
-                           ;; layer-groups in config order, to re-assert
-                           ;; stacking after toggles (see overlayadd below)
-                           order (atom [])]
+                           ;; layer-groups in legend (UI) order, so we can keep
+                           ;; higher-in-UI layers stacked above lower ones
+                           order (atom [])
+                           ;; re-assert stacking: bring visible layers to front
+                           ;; from the bottom of the legend upward, so the topmost
+                           ;; legend entry ends up on top of the map
+                           restack (fn []
+                                     (doseq [lg (reverse @order)]
+                                       (when (.hasLayer m lg)
+                                         (.bringToFront lg))))]
                        ;; give the map a view up front so layer/renderer adds
                        ;; happen synchronously (their DOM containers exist
                        ;; immediately); fitBounds at the end refines it
@@ -442,14 +449,11 @@
                          (set! (.-textContent st)
                                ".leaflet-control-layers-selector{accent-color:#555}")
                          (.appendChild (.-head js/document) st))
-                       ;; keep stacking fixed to config order: a toggled-on layer
-                       ;; would otherwise pop to the top, so re-front the visible
-                       ;; layers in their configured order on every overlay add
-                       (.on m "overlayadd"
-                            (fn [_]
-                              (doseq [lg @order]
-                                (when (.hasLayer m lg)
-                                  (.bringToFront lg)))))
+                       ;; higher-in-UI layers cover lower ones: assert that
+                       ;; stacking now and after every toggle (a toggled-on layer
+                       ;; would otherwise pop to the very top)
+                       (restack)
+                       (.on m "overlayadd" (fn [_] (restack)))
                        (.fitBounds m (.getBounds all)))))}])
   layers-data
   patterns]
