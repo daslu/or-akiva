@@ -394,7 +394,7 @@
                                                           :opacity 1
                                                           :fillOpacity 1}
                                                          style-override))
-                                   point-style (clj->js {:radius 5
+                                   point-style (clj->js {:radius 2
                                                          :color c
                                                          :fillColor c
                                                          :weight 1
