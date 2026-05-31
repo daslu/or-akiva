@@ -35,19 +35,6 @@
     "ספורט ונופש"
     #_"פארק / גן ציבורי"})
 
-(def religious-types
-  #{"בית כנסת"
-    "מבנה דת"
-    "מקווה"
-    "משרדי מועצה דתית"})
-
-(def herum-types-buildings
-  #{"חירום"
-    "מחסן חירום"})
-
-(def herum-types-helka70
-  #{"שירותי חירום"})
-
 #_"Tooltip field definitions.
    A field is [label key], where key is either a property keyword or a vector
    of candidate keywords (first non-nil wins — useful for mojibake key drift
@@ -104,14 +91,21 @@
    {:key :mivney-dat
     :name "מבני דת"
     :sources [{:file "Buildings.geojson"
-               :filter [{:field :סוג :values religious-types}]}]
+               :filter [{:field :סוג
+                         :values #{"בית כנסת"
+                                   "מבנה דת"
+                                   "מקווה"
+                                   "משרדי מועצה דתית"}}]}]
     :fields building-fields}
    {:key :herum
     :name "חירום"
     :sources [{:file "Buildings.geojson"
-               :filter [{:field :סוג :values herum-types-buildings}]}
+               :filter [{:field :סוג
+                         :values #{"חירום"
+                                   "מחסן חירום"}}]}
               {:file "helka_70.geojson"
-               :filter [{:field :סוג :values herum-types-helka70}]}]
+               :filter [{:field :סוג
+                         :values #{"שירותי חירום"}}]}]
     :fields building-fields}])
 
 (defn load-features [path]
